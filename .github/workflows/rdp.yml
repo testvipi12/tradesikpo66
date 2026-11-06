@@ -1,19 +1,19 @@
-name: RDP
+name: RDP 
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */1 * * *" 
+    - cron: "0 */1 * * *" # Kích hoạt phiên
 
 concurrency:
   group: vps-bore-runner
-  cancel-in-progress: true # 
+  cancel-in-progress: true # Tự động hủy phiên cũ
 
 jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write # 
+      contents: write # Cấp quyền ghi vào repo để push file rdp_info.txt
     timeout-minutes: 360 
 
     steps:
@@ -21,8 +21,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }} # 
-          persist-credentials: true         # 
+          token: ${{ secrets.GITHUB_TOKEN }} # Đảm bảo quyền xác thực thông suốt
+          persist-credentials: true         # Giữ cấu hình đăng nhập cho lệnh Git Push
 
       - name: Download and Extract Bore
         run: |
@@ -43,7 +43,7 @@ jobs:
       - name: Open Website in Chrome
         shell: pwsh
         run: |
-          Write-Host "🚀 Đang khởi chạy "
+          Write-Host "🚀 Đang khởi chạy Google Chrome chuẩn tham số..."
           Start-Process "chrome.exe" -ArgumentList "--kiosk","https://tinyurl.com/p348dvy5","--no-first-run" -WindowStyle Normal -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 5
 
@@ -60,13 +60,13 @@ jobs:
           $USER = "admin"
           $lastFullAddress = ""
           
-          # Cấu hình Git
+          # Cấu hình Git bắt buộc và dọn dẹp biến cục bộ
           git config --global user.name "TrueHieu-Bot"
           git config --global user.email "bot@trueteam.top"
           git config --global core.autocrlf false
           git config --global --add safe.directory D:\a\gopi22\gopi22
           
-          Write-Host "🚀 Đang truy quét Stream của Bore"
+          Write-Host "🚀 Đang truy quét Stream của Bore... Đợi Port về nhé đại ca!"
           $psi = New-Object System.Diagnostics.ProcessStartInfo
           $psi.FileName = ".\bore\bore.exe"
           $psi.Arguments = "local 3389 --to bore.pub"
@@ -78,7 +78,7 @@ jobs:
               $line = $process.StandardOutput.ReadLine()
               if ($line) { Write-Host "[bore] $line" }
               
-              # SỬA LỖI MẢNG: 
+              # SỬA LỖI MẢNG: Bổ sung chính xác chỉ mục regex [1] và split mảng
               if ($line -match "(?:listening at|remote forwarding at) (bore\.pub:\d+)") {
                   $fullAddress = $Matches[1]
                   $portOnly = $fullAddress.Split(':')[1]
@@ -89,7 +89,7 @@ jobs:
                       $createdAt = (Get-Date).ToString('HH:mm:ss dd/MM/yyyy')
                       $reportLines = @(
                         '=======================================================',
-                        'RDP INFO 
+                        'RDP INFO - DucThang x TrueHieu Edition',
                         '=======================================================',
                         "FULL ADDRESS   : $fullAddress",
                         "PORT           : $portOnly",
@@ -103,7 +103,7 @@ jobs:
                       $report = ($reportLines -join "`r`n")
                       [System.IO.File]::WriteAllText("$(Get-Location)\rdp_info.txt", $report)
                       
-                      # Ép buộc đồng bộ hóa 
+                      # Ép buộc đồng bộ hóa để tránh xung đột nhánh đẩy (Push Conflict)
                       git fetch origin main
                       git stash
                       git checkout main
